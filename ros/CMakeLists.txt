@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.16...3.26)
 project(kinematic_icp VERSION 0.0.1 LANGUAGES CXX)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../cpp/kinematic_icp ${CMAKE_CURRENT_BINARY_DIR}/kinematic_icp)
 

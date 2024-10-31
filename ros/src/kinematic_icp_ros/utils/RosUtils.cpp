@@ -52,15 +52,31 @@ std::vector<double> NormalizeTimestamps(const std::vector<double> &timestamps) {
     return timestamps_normalized;
 }
 
+auto ConvertToNanoseconds(double time, TimeUnit unit) {
+    switch (unit) {
+        case TimeUnit::SECONDS:
+            return time * 1e9;
+        case TimeUnit::MILLISECONDS:
+            return time * 1e6;
+        case TimeUnit::MICROSECONDS:
+            return time * 1e3;
+        case TimeUnit::NANOSECONDS:
+        default:
+            return time;
+    }
+}
+
 auto ExtractTimestampsFromMsg(const PointCloud2::ConstSharedPtr msg,
-                              const PointField &timestamp_field) {
+                              const PointField &timestamp_field,
+                              const TimeUnit unit) {
     auto extract_timestamps =
-        [&msg]<typename T>(sensor_msgs::PointCloud2ConstIterator<T> &&it) -> std::vector<double> {
+        [&msg, unit]<typename T>(sensor_msgs::PointCloud2ConstIterator<T> &&it) -> std::vector<double> {
         const size_t n_points = msg->height * msg->width;
         std::vector<double> timestamps;
         timestamps.reserve(n_points);
         for (size_t i = 0; i < n_points; ++i, ++it) {
-            timestamps.emplace_back(static_cast<double>(*it));
+            double time_in_seconds = ConvertToNanoseconds(static_cast<double>(*it), unit);
+            timestamps.emplace_back(time_in_seconds);
         }
         return timestamps;
     };
@@ -84,7 +100,7 @@ std::vector<double> GetTimestamps(const PointCloud2::ConstSharedPtr msg) {
     if (!timestamp_field.has_value()) return {};
 
     // Extract timestamps from cloud_msg
-    std::vector<double> timestamps = ExtractTimestampsFromMsg(msg, timestamp_field.value());
+    std::vector<double> timestamps = ExtractTimestampsFromMsg(msg, timestamp_field.value(), TimeUnit::NANOSECONDS);
 
     return timestamps;
 }

@@ -186,7 +186,7 @@ void LidarOdometryServer::RegisterFrame(const sensor_msgs::msg::PointCloud2::Con
     const auto &[min_it, max_it] = std::minmax_element(timestamps.cbegin(), timestamps.cend());
     // From double to ROS TimeStamp
     auto toStamp = [](const double &time) -> builtin_interfaces::msg::Time {
-        return rclcpp::Time(tf2::durationFromSec(time).count());
+        return rclcpp::Time{static_cast<int64_t>(time)};
     };
     // Update what is the current stamp of this iteration
     const auto begin_scan_stamp = min_it != timestamps.cend() ? toStamp(*min_it) : last_stamp;
@@ -208,10 +208,10 @@ void LidarOdometryServer::RegisterFrame(const sensor_msgs::msg::PointCloud2::Con
     }
 
     auto toTime = [](const builtin_interfaces::msg::Time &stamp) -> double {
-        return rclcpp::Time(stamp).nanoseconds() * 1e-9;
+        return rclcpp::Time(stamp).nanoseconds();
     };
     // Compute velocities, use the elapsed time between the current msg and the last received
-    const double elapsed_time = toTime(current_stamp_) - toTime(last_stamp);
+    const double elapsed_time = (toTime(current_stamp_) - toTime(last_stamp)) * 1e-9;
     const Sophus::SE3d::Tangent delta_twist = (last_pose.inverse() * kinematic_icp_->pose()).log();
     const Sophus::SE3d::Tangent velocity = delta_twist / elapsed_time;
 
